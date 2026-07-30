@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Blood Donor Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">🩸 Blood Donor Management</div>
+        <div>
+            <span id="welcomeMsg" style="color:white; margin-right:20px;"></span>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="card-container">
+        <h2 style="margin: 20px 0;">Your Profile</h2>
+        <div id="profileCard" style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1);"></div>
+
+        <h2 style="margin: 30px 0 10px;">Open Blood Requests Matching Your Blood Group</h2>
+        <table id="requestsTable">
+            <thead>
+                <tr>
+                    <th>Hospital</th>
+                    <th>City</th>
+                    <th>Blood Group</th>
+                    <th>Units Needed</th>
+                    <th>Urgency</th>
+                </tr>
+            </thead>
+            <tbody id="requestsBody"></tbody>
+        </table>
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:5000";
+
+        const token = localStorage.getItem("token");
+        const userType = localStorage.getItem("userType");
+        const userData = JSON.parse(localStorage.getItem("userData") || "null");
+
+        if (!token || userType !== "donor" || !userData) {
+            window.location.href = "login.html";
+        }
+
+        document.getElementById("welcomeMsg").textContent = "Welcome, " + userData.name;
+
+        document.getElementById("profileCard").innerHTML = `
+            <p><strong>Name:</strong> ${userData.name}</p>
+            <p><strong>Email:</strong> ${userData.email}</p>
+            <p><strong>Blood Group:</strong> ${userData.blood_group}</p>
+        `;
+
+        async function loadMatchingRequests() {
+            const messageEl = document.getElementById("message");
+            try {
+                const response = await fetch(API_BASE + "/api/requests/match/" + userData.blood_group);
+                const data = await response.json();
+
+                const tbody = document.getElementById("requestsBody");
+                tbody.innerHTML = "";
+
+                if (data.length === 0) {
+                    messageEl.textContent = "No open requests matching your blood group right now.";
+                    messageEl.className = "message";
+                    return;
+                }
+
+                data.forEach(req => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${req.hospital_name}</td>
+                        <td>${req.city}</td>
+                        <td>${req.blood_group}</td>
+                        <td>${req.units_needed}</td>
+                        <td>${req.urgency}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                messageEl.textContent = "Could not load requests. Is the backend running?";
+                messageEl.className = "message error";
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "index.html";
+        }
+
+        loadMatchingRequests();
+    </script>
+</body>
+</html>

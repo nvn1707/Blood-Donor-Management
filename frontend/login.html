@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Blood Donor Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">🩸 Blood Donor Management</div>
+        <div>
+            <a href="index.html">Home</a>
+            <a href="register.html">Register</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Login</h2>
+
+        <label>Login as:</label>
+        <select id="userType">
+            <option value="donor">Donor</option>
+            <option value="hospital">Hospital</option>
+        </select>
+
+        <label>Email</label>
+        <input type="email" id="email" placeholder="Email address">
+
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Password">
+
+        <button onclick="loginUser()">Login</button>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:5000";
+
+        async function loginUser() {
+            const messageEl = document.getElementById("message");
+            messageEl.textContent = "";
+
+            const type = document.getElementById("userType").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const endpoint = type === "donor" ? "/api/donors/login" : "/api/hospitals/login";
+
+            try {
+                const response = await fetch(API_BASE + endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Save token and user info in memory for this session
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("userType", type);
+                    localStorage.setItem("userData", JSON.stringify(data[type] || data.donor || data.hospital));
+
+                    messageEl.textContent = "Login successful! Redirecting...";
+                    messageEl.className = "message success";
+                    setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
+                } else {
+                    messageEl.textContent = data.error || "Login failed";
+                    messageEl.className = "message error";
+                }
+            } catch (err) {
+                messageEl.textContent = "Could not connect to server. Is the backend running?";
+                messageEl.className = "message error";
+            }
+        }
+    </script>
+</body>
+</html>

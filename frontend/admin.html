@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Blood Donor Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">🩸 Blood Donor Management</div>
+        <div>
+            <a href="index.html">Home</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container" id="loginBox">
+        <h2>Admin Login</h2>
+        <label>Username</label>
+        <input type="text" id="username" placeholder="Username">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="adminLogin()">Login</button>
+        <div class="message" id="message"></div>
+    </div>
+
+    <div class="card-container" id="adminPanel" style="display:none;">
+        <h2>All Donors</h2>
+        <table id="donorsTable">
+            <thead><tr><th>Name</th><th>Blood Group</th><th>Phone</th><th>Email</th><th>City</th><th>Available</th></tr></thead>
+            <tbody id="donorsBody"></tbody>
+        </table>
+
+        <h2 style="margin-top:30px;">All Hospitals</h2>
+        <table id="hospitalsTable">
+            <thead><tr><th>Name</th><th>City</th><th>Contact</th><th>Email</th></tr></thead>
+            <tbody id="hospitalsBody"></tbody>
+        </table>
+
+        <h2 style="margin-top:30px;">All Blood Requests</h2>
+        <table id="requestsTable">
+            <thead><tr><th>Hospital</th><th>City</th><th>Blood Group</th><th>Units</th><th>Urgency</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="requestsBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:5000";
+        let adminToken = null;
+
+        async function adminLogin() {
+            const messageEl = document.getElementById("message");
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch(API_BASE + "/api/admin/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    adminToken = data.token;
+                    document.getElementById("loginBox").style.display = "none";
+                    document.getElementById("adminPanel").style.display = "block";
+                    loadAllData();
+                } else {
+                    messageEl.textContent = data.error || "Login failed";
+                    messageEl.className = "message error";
+                }
+            } catch (err) {
+                messageEl.textContent = "Could not connect to server. Is the backend running?";
+                messageEl.className = "message error";
+            }
+        }
+
+        async function loadAllData() {
+            // Donors
+            const donorsRes = await fetch(API_BASE + "/api/admin/donors");
+            const donors = await donorsRes.json();
+            const donorsBody = document.getElementById("donorsBody");
+            donorsBody.innerHTML = donors.map(d => `
+                <tr><td>${d.name}</td><td>${d.blood_group}</td><td>${d.phone}</td><td>${d.email}</td><td>${d.city}</td><td>${d.available ? "Yes" : "No"}</td></tr>
+            `).join("");
+
+            // Hospitals
+            const hospitalsRes = await fetch(API_BASE + "/api/admin/hospitals");
+            const hospitals = await hospitalsRes.json();
+            const hospitalsBody = document.getElementById("hospitalsBody");
+            hospitalsBody.innerHTML = hospitals.map(h => `
+                <tr><td>${h.name}</td><td>${h.city}</td><td>${h.contact}</td><td>${h.email}</td></tr>
+            `).join("");
+
+            // Requests
+            const requestsRes = await fetch(API_BASE + "/api/admin/requests");
+            const requests = await requestsRes.json();
+            const requestsBody = document.getElementById("requestsBody");
+            requestsBody.innerHTML = requests.map(r => `
+                <tr>
+                    <td>${r.hospital_name}</td><td>${r.city}</td><td>${r.blood_group}</td>
+                    <td>${r.units_needed}</td><td>${r.urgency}</td><td>${r.status}</td>
+                    <td><button onclick="deleteRequest(${r.request_id})" style="width:auto; padding:5px 10px; margin:0;">Delete</button></td>
+                </tr>
+            `).join("");
+        }
+
+        async function deleteRequest(requestId) {
+            await fetch(API_BASE + "/api/admin/requests/" + requestId, { method: "DELETE" });
+            loadAllData();
+        }
+
+        function logout() {
+            adminToken = null;
+            document.getElementById("loginBox").style.display = "block";
+            document.getElementById("adminPanel").style.display = "none";
+        }
+    </script>
+</body>
+</html>

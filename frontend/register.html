@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Blood Donor Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">🩸 Blood Donor Management</div>
+        <div>
+            <a href="index.html">Home</a>
+            <a href="login.html">Login</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Register</h2>
+
+        <label>Register as:</label>
+        <select id="userType">
+            <option value="donor">Donor</option>
+            <option value="hospital">Hospital</option>
+        </select>
+
+        <label>Name</label>
+        <input type="text" id="name" placeholder="Full name / Hospital name">
+
+        <div id="donorFields">
+            <label>Blood Group</label>
+            <select id="bloodGroup">
+                <option>A+</option>
+                <option>A-</option>
+                <option>B+</option>
+                <option>B-</option>
+                <option>O+</option>
+                <option>O-</option>
+                <option>AB+</option>
+                <option>AB-</option>
+            </select>
+
+            <label>Phone</label>
+            <input type="text" id="phone" placeholder="Phone number">
+        </div>
+
+        <div id="hospitalFields" style="display:none;">
+            <label>Contact Number</label>
+            <input type="text" id="contact" placeholder="Contact number">
+        </div>
+
+        <label>City</label>
+        <input type="text" id="city" placeholder="City">
+
+        <label>Email</label>
+        <input type="email" id="email" placeholder="Email address">
+
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Password">
+
+        <button onclick="registerUser()">Register</button>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:5000";
+
+        const userType = document.getElementById("userType");
+        const donorFields = document.getElementById("donorFields");
+        const hospitalFields = document.getElementById("hospitalFields");
+
+        userType.addEventListener("change", () => {
+            if (userType.value === "donor") {
+                donorFields.style.display = "block";
+                hospitalFields.style.display = "none";
+            } else {
+                donorFields.style.display = "none";
+                hospitalFields.style.display = "block";
+            }
+        });
+
+        async function registerUser() {
+            const messageEl = document.getElementById("message");
+            messageEl.textContent = "";
+
+            const type = userType.value;
+            const name = document.getElementById("name").value;
+            const city = document.getElementById("city").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            let endpoint, body;
+
+            if (type === "donor") {
+                const bloodGroup = document.getElementById("bloodGroup").value;
+                const phone = document.getElementById("phone").value;
+                endpoint = "/api/donors/register";
+                body = { name, blood_group: bloodGroup, phone, email, city, password };
+            } else {
+                const contact = document.getElementById("contact").value;
+                endpoint = "/api/hospitals/register";
+                body = { name, contact, email, city, password };
+            }
+
+            try {
+                const response = await fetch(API_BASE + endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageEl.textContent = data.message + " Redirecting to login...";
+                    messageEl.className = "message success";
+                    setTimeout(() => { window.location.href = "login.html"; }, 1500);
+                } else {
+                    messageEl.textContent = data.error || "Registration failed";
+                    messageEl.className = "message error";
+                }
+            } catch (err) {
+                messageEl.textContent = "Could not connect to server. Is the backend running?";
+                messageEl.className = "message error";
+            }
+        }
+    </script>
+</body>
+</html>
