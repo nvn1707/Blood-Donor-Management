@@ -1,3 +1,16 @@
+## 🌐 Live Demo
+
+- **Website:** https://blooddonormanage.netlify.app
+- **Backend API:** https://blood-donor-management-ypz2.onrender.com
+
+> Note: The backend is hosted on Render's free tier, which sleeps after ~15 minutes of inactivity. The first request may take 20–50 seconds to wake it up — subsequent requests are fast.
+
+**Test accounts:**
+| Role | Email / Username | Password |
+|------|-------------------|----------|
+| Admin | `admin` | `admin1234` |
+
+---
 # 🩸 Blood Donor Management System
 
 A full-stack web application that connects blood donors with hospitals in need, built as a cloud computing course project. The system supports donor and hospital registration, blood request posting and matching by blood group, donation tracking, and an admin dashboard.
